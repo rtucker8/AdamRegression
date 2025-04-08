@@ -2,7 +2,7 @@
 
 **Installation**
 
-Install the latest version of AdamReg using devtools::install_github("rtucker8/AdamReg"). You will need to install the devtools package if you have not already.
+Install the latest version of AdamReg using devtools::install_github("rtucker8/AdamRegression"). You will need to install the devtools package if you have not already.
 
 **Features**
 
