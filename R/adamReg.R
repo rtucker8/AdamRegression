@@ -26,7 +26,7 @@ gradient_function <- function(theta, X, Y) {
 #'
 #' @description Implements the gradient descent algorithm for logistic regression with a fixed learning rate.
 #'
-#' @details The gradient without penalties is: \deqn{-X^T(Y-\mu)}
+#' @details The gradient is: \deqn{-X^T(Y-\mu)}
 #'
 #' where \eqn{\mu = \frac{e^{X^T\beta}}{1+e^{X^T\beta}}}.
 #'
