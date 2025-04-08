@@ -7,8 +7,6 @@
 adam(
   X,
   Y,
-  penalty = "none",
-  lambda = 0,
   batch_size = 32,
   alpha = 0.001,
   beta_decay = c(0.9, 0.999),
@@ -22,10 +20,6 @@ adam(
 \item{X}{A matrix of features.}
 
 \item{Y}{The response vector.}
-
-\item{penalty}{The penalty (L1, L2) for the loss function.}
-
-\item{lambda}{The numeric value of the penalty.}
 
 \item{batch_size}{Size of mini-batches used in the gradient descent algorithm.}
 

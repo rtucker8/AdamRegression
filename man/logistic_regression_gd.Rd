@@ -8,8 +8,6 @@ logistic_regression_gd(
   X,
   Y,
   alpha = 0.01,
-  penalty = "none",
-  lambda = 0,
   maxit = 1000,
   tol = 1e-06,
   check_conv = TRUE
@@ -21,10 +19,6 @@ logistic_regression_gd(
 \item{Y}{The response vector, binary.}
 
 \item{alpha}{The learning rate (step size), fixed.}
-
-\item{penalty}{The penalty (L1, L2) for the loss function.}
-
-\item{lambda}{The numeric value of the penalty.}
 
 \item{maxit}{The maximum number of iterations.}
 
@@ -40,10 +34,6 @@ Implements the gradient descent algorithm for logistic regression with a fixed l
 }
 \details{
 The gradient without penalties is: \deqn{-X^T(Y-\mu)}
-
-The gradient with L1 penalty ("LASSO") is: \deqn{-X^T(Y-\mu) + \lambda\sum_{i=1}^n{|\beta|}}
-
-The gradient with L2 penalty ("Ridge") is: \deqn{-X^T(Y-\mu) + \frac{\lambda}{2}\sum_{i=1}^n{\beta^2}}
 
 where \eqn{\mu = \frac{e^{X^T\beta}}{1+e^{X^T\beta}}}.
 

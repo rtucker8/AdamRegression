@@ -4,7 +4,7 @@
 \alias{gradient_function}
 \title{Calculate gradient of the loss function for logistic regression.}
 \usage{
-gradient_function(theta, X, Y, penalty = "none", lambda = 0)
+gradient_function(theta, X, Y)
 }
 \arguments{
 \item{theta}{A parameter vector.}
@@ -12,24 +12,16 @@ gradient_function(theta, X, Y, penalty = "none", lambda = 0)
 \item{X}{A matrix of features.}
 
 \item{Y}{The response vector.}
-
-\item{penalty}{The penalty (L1, L2) for the loss function.}
-
-\item{lambda}{The numeric value of the penalty.}
 }
 \value{
 A numeric value.
 }
 \description{
-Calculates the gradient of the objective function for logistic regression,
-with options for L1 or L2 regularization penalties.
+Calculates the gradient of the objective function for logistic regression.
 }
 \details{
-The gradient without penalties is: \deqn{-X^T(Y-\mu)}
+The gradient without is: \deqn{-X^T(Y-\mu)}
 
-The gradient with L1 penalty ("LASSO") is: \deqn{-X^T(Y-\mu) + \lambda\sum_{i=1}^n{|\beta|}}
-
-The gradient with L2 penalty ("Ridge") is: \deqn{-X^T(Y-\mu) + \frac{\lambda}{2}\sum_{i=1}^n{\beta^2}}
 
 where \eqn{\mu = \frac{e^{X^T\beta}}{1+e^{X^T\beta}}}.
 }

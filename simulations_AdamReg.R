@@ -4,8 +4,6 @@ library(microbenchmark)
 library(cowplot)
 library(glmnet)
 
-#TO DO: Make sure GLM realizes X already has a column for the intercept term
-
 #Simulate some data
 set.seed(2025)
 
@@ -78,7 +76,7 @@ for (i in 1:500) {
   rmse_results$adamR[i] <- compute_rmse(prob, fitted.values.adamR)
 
   #Estimate parameters using our Adam algorithm
-  theta.fit <- adam::adam(X, Y, penalty = "none", batch_size = dim(X)[1]/5, tol = 1e-3, alpha=sd(X)/p, maxit = 1000, check_conv = FALSE)
+  theta.fit <- adam::adam(X, Y, batch_size = dim(X)[1]/5, tol = 1e-3, alpha=sd(X)/p, maxit = 1000, check_conv = FALSE)
   results$adam = cbind(results$adam, theta.fit)
   #Calculate RMSE
   fitted.values.adam <- 1/ (1 + exp(-X %*%theta.fit))
@@ -193,145 +191,3 @@ ggplot(benchmark_results, aes(x = algorithm, y=time_microsec, fill=algorithm)) +
         legend.text = element_text(size = 12)) +
   guides(fill=FALSE)
 ggsave("benchmark_plot.png", width = 9, height = 6)
-
-
-
-# High Dimensional Simulation --------------------------------------------
-#Simulate some data
-set.seed(2025)
-
-n=1000 #number of rows
-p = 99 #number of predictors
-k = 10 #number of non-zero coefficients
-
-beta_k_neg = runif(k/2, -2, -.1) #true coefficients, negative
-beta_k_pos = runif(k/2, .1, 2) #true coefficients, positive
-beta_k = c(beta_k_neg, beta_k_pos) #true coefficients
-
-beta = c(beta_k, rep(0, p-k)) #true coefficients
-beta = sample(beta, length(beta))#randomly permute the coefficients
-beta = c(runif(1, 0, 1), beta) #add intercept term
-
-rmse_results <- list(glm = numeric(500),  adam = numeric(500), gd = numeric(500))
-results = list()
-
-for (i in 1:500) {
-
-
-  # #Estimation with glm (uses Fisher Scoring to optimize)
-  # glm.fit <- cv.glmnet(X[,-1], Y, alpha = 1, family = binomial)
-  # results$glm = cbind(results$glm, as.matrix(coef(glm.fit)))
-  # #Calculate RMSE
-  # fitted.values.glm <- predict(glm.fit, s = "lambda.min", type = "response", newx = X[,-1])
-  #
-  # rmse_results$glm[i] <- compute_rmse(prob, fitted.values.glm)
-
-  #Estimation with gradient descent
-  gradient.opt.lambda <- cross_validate_gd(k=5, X, Y, alpha=0.001, penalty = "lasso", tol=1e-3)
-  gradient.fit <- as.matrix(logistic_regression_gd(X, Y, alpha = 0.001, penalty = "lasso", lambda = gradient.opt.lambda, check_conv=FALSE))
-  results$gradient = cbind(results$gradient, gradient.fit)
-  #Calculate RMSE
-  fitted.values.grad <- 1/ (1 + exp(-X %*% gradient.fit))
-  rmse_results$gradient[i] <- compute_rmse(prob, fitted.values.grad)
-
-  # #Estimate parameters using our Adam algorithm
-  # lambda.opt = adam::cross_validate_adam(k = 5, X, Y, penalty = "lasso", batch_size = dim(X)[1]/5, tol = 1e-3, alpha = sd(X)/p, maxit = 1000)
-  # theta.fit <- adam::adam(X, Y, penalty = "lasso", lambda = ,batch_size = dim(X)[1]/5, tol = 1e-3, alpha=sd(X)/p, maxit = 1000, check_conv = FALSE)
-  # results$adam = cbind(results$adam, theta.fit)
-  # #Calculate RMSE
-  # fitted.values.adam <- 1/ (1 + exp(-X %*%theta.fit))
-  # rmse_results$adam[i] <- compute_rmse(prob, fitted.values.adam)
-  #
-}
-
-# Create a data frame for plotting RMSE results
-rmse_plot <- data.frame(
-  RMSE = c(rmse_results$glm, rmse_results$adam),
-  Algorithm = rep(c("glmnet", "AdamReg"), each = 500)
-) %>%
-  mutate(Algorithm = factor(Algorithm, levels = c("glmnet", "AdamReg"), ordered=T))
-
-# Plot RMSE for each algorithm
-RMSE <- ggplot(rmse_plot, aes(x = Algorithm, y = RMSE, fill = Algorithm)) +
-  geom_boxplot() +
-  ggtitle("RMSE of Estimates") +
-  scale_fill_brewer(palette = "Set2") +
-  theme(plot.title = element_text(hjust = 0.5, size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_text(angle = 45),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12)) +
-  ylim(0, .3) +
-  guides(fill=FALSE)
-print(RMSE)
-#Transform results into a single dataframe to plot bias results
-glm <- as.data.frame(t(as.matrix(results$glm)))[, which(beta !=0)]
-glm_bias <- sweep(glm, 2, beta[which(beta!=0)], "-")
-names(glm_bias) <- round(beta[which(beta!=0)], 3)
-glm_bias$algorithm = "glmnet"
-glm_bias <- glm_bias %>% pivot_longer(cols = -algorithm, names_to = "Variable", values_to = "Bias")
-
-adam <- as.data.frame(t(as.matrix(results$adam)))[, which(beta !=0)]
-adam_bias <- sweep(adam, 2, beta[which(beta!=0)], "-")
-names(adam_bias) <- round(beta[which(beta!=0)], 3)
-adam_bias$algorithm = "AdamReg"
-adam_bias <- adam_bias %>% pivot_longer(cols = -algorithm, names_to = "Variable", values_to = "Bias")
-
-bias <- bind_rows(glm_bias, adam_bias)
-
-#Plot Results
-bias <- ggplot(bias, aes(x = Variable, y=Bias, fill=algorithm)) +
-  geom_boxplot() +
-  geom_hline(yintercept = 0, linetype="dashed", color = "black", linewidth = 1.5) +
-  scale_fill_brewer(palette = "Set2") +
-  ggtitle("Bias of Non-Zero Parameter Estiamtes") +
-  xlab("Non-zero Parameter Values") +
-  guides(fill=guide_legend(title="Optimization Algorithm")) +
-  theme(plot.title = element_text(hjust = 0.5, size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12))
-print(bias)
-# Assess proportion of times the algorithm selected the non-zero values
-glm_prop <- as.data.frame(t(as.matrix(results$glm)))[, which(beta !=0)] %>%
-  summarise(across(everything(), ~ mean(.x != 0)))
-names(glm_prop) <- round(beta[which(beta!=0)], 3)
-glm_prop <- glm_prop %>% pivot_longer(cols = everything(), names_to = "Variable", values_to = "Proportion") %>%
-  mutate(Algorithm = "glmnet")
-
-#Plot proportion of times the algorithm selected non-zero values as a bar chart
-ggplot(glm_prop, aes(x = Variable, y=Proportion, fill=Algorithm)) +
-  geom_bar(stat = "identity") +
-  scale_fill_brewer(palette = "Set2") +
-  ggtitle("Selection Probability for Non-Zero Parameters") +
-  xlab("Non-zero Parameter Values") +
-  guides(fill=guide_legend(title="Optimization Algorithm")) +
-  theme(plot.title = element_text(hjust = 0.5, size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12))
-
-#Assess proportion of times the algorithm incorrectly selected zero values
-glm_prop <- as.data.frame(t(as.matrix(results$glm)))[, which(beta ==0)] %>%
-  summarise(across(everything(), ~ mean(.x != 0)))
-glm_prop <- glm_prop %>% pivot_longer(cols = everything(), names_to = "Variable", values_to = "Proportion") %>%
-  mutate(Algorithm = "glmnet")
-
-
-#Plot the proportion of times the algorithm incorrectly selected zero values
-ggplot(glm_prop, aes(x = Variable, y=Proportion, fill=Algorithm)) +
-  geom_bar(stat = "identity") +
-  scale_fill_brewer(palette = "Set2") +
-  ggtitle("Selection Probability for Zero Parameters") +
-  xlab("Zero Parameter Values") +
-  guides(fill=guide_legend(title="Optimization Algorithm")) +
-  theme(plot.title = element_text(hjust = 0.5, size = 16),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank())
