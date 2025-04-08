@@ -102,11 +102,6 @@ logistic_regression_gd <- function(X, Y, alpha = 0.01, maxit = 1000, tol = 1e-6,
 adam <- function(X, Y, batch_size = 32, alpha = 0.001, beta_decay = c(0.9, 0.999),
                  epsilon = 1e-8, maxit = 1000, tol= 1e-4, check_conv = TRUE) {
 
-  # Check that penalty is one of the allowed values
-  if (!(penalty %in% c("none", "ridge", "lasso"))) {
-    stop("penalty must be one of 'none', 'ridge', or 'lasso'")
-  }
-
   # Check that elements of beta are in  [0,1)
   if (any(beta_decay >= 1) || any(beta_decay < 0)) {
     stop("Elements of beta must be in [0,1)")
