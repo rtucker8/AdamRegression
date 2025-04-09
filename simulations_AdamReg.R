@@ -3,6 +3,7 @@ library(tidyverse)
 library(microbenchmark)
 library(cowplot)
 library(glmnet)
+library(AdamRegression)
 
 #Simulate some data
 set.seed(2025)
@@ -76,7 +77,7 @@ for (i in 1:500) {
   rmse_results$adamR[i] <- compute_rmse(prob, fitted.values.adamR)
 
   #Estimate parameters using our Adam algorithm
-  theta.fit <- adam::adam(X, Y, batch_size = dim(X)[1]/5, tol = 1e-3, alpha=sd(X)/p, maxit = 1000, check_conv = FALSE)
+  theta.fit <- AdamRegression::adam(X, Y, batch_size = dim(X)[1]/5, tol = 1e-3, alpha=sd(X)/p, maxit = 1000, check_conv = FALSE)
   results$adam = cbind(results$adam, theta.fit)
   #Calculate RMSE
   fitted.values.adam <- 1/ (1 + exp(-X %*%theta.fit))
